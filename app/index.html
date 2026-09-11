@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Angella Fit — пАнтера</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#0d0d0d;
+    --panel:#1a1a1a;
+    --pink:#f0327a;
+    --white:#f5f5f0;
+    --gray:#9a9a92;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:#0d0d0d;
+    font-family:'Manrope',sans-serif;
+    color:var(--white);
+    display:flex;justify-content:center;
+  }
+  #app{
+    width:100%;max-width:480px;min-height:100vh;background:var(--black);
+    display:flex;flex-direction:column;position:relative;overflow-x:hidden;
+  }
+  .tg-bar{
+    background:#1d1d1d;padding:12px 16px;display:flex;align-items:center;gap:10px;
+    border-bottom:1px solid #2a2a24;position:sticky;top:0;z-index:20;
+  }
+  .tg-bar .back{font-size:20px;color:var(--pink);padding-right:2px;display:none;cursor:pointer;}
+  .tg-bar .back.show{display:block;}
+  .avatar{
+    width:32px;height:32px;border-radius:50%;background:var(--pink);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';color:#1a0510;font-size:16px;
+    overflow:hidden;
+  }
+  .avatar img{width:100%;height:100%;object-fit:cover;object-position:center 15%;}
+  .tg-bar b{font-size:14px;font-weight:700;display:block;}
+  .tg-bar span{font-size:11px;color:var(--gray);}
+  main{flex:1;position:relative;padding-bottom:12px;}
+  .view{display:none;}
+  .view.active{display:block;animation:fadein .15s ease;}
+  @keyframes fadein{from{opacity:0;}to{opacity:1;}}
+  .view.with-watermark{position:relative;}
+  .view.with-watermark::before{
+    content:"";position:fixed;inset:0;z-index:0;
+    background:url('../assets/hero_face.jpg?v=2') center 12%/cover;
+    opacity:0.08;filter:grayscale(40%);pointer-events:none;
+  }
+  .cover-photo{height:240px;position:relative;overflow:hidden;background:#000;display:flex;align-items:flex-end;}
+  .cover-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 25%;}
+  .regalia-list{margin-bottom:16px;}
+  .regalia-item{font-size:12.5px;color:var(--white);line-height:1.5;padding:8px 0;border-bottom:1px solid #2a2a24;}
+  .regalia-item:last-child{border-bottom:none;}
+  .cover-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg, rgba(13,13,13,0) 45%, rgba(13,13,13,0.95) 100%);}
+  .cover-photo .brand{position:relative;z-index:2;padding:16px;font-family:'Bebas Neue';font-size:30px;letter-spacing:1px;}
+  .cover-photo .brand span{color:var(--pink);}
+  .content{padding:18px;position:relative;z-index:1;}
+  .greet{font-size:13px;color:var(--gray);margin-bottom:14px;}
+  .greet b{color:var(--white);}
+  .split{display:flex;gap:10px;margin-bottom:18px;}
+  .split-btn{
+    flex:1;background:var(--panel);border:1px solid #2a2a24;border-radius:12px;
+    padding:14px 8px;text-align:center;cursor:pointer;
+  }
+  .split-btn .ico{font-size:18px;margin-bottom:5px;}
+  .split-btn .label{font-size:11.5px;font-weight:800;}
+  .split-btn .sub{font-size:9.5px;color:var(--gray);margin-top:3px;line-height:1.3;}
+  .split-btn.active{border-color:var(--pink);}
+  .section-title{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px;}
+  .prog-card{
+    background:var(--panel);border:1px solid #2a2a24;border-radius:14px;padding:15px;margin-bottom:10px;
+    display:flex;justify-content:space-between;align-items:center;cursor:pointer;
+  }
+  .prog-card:active{border-color:var(--pink);}
+  .prog-card .name{font-size:14px;font-weight:800;}
+  .prog-card .sub{font-size:11px;color:var(--gray);margin-top:3px;}
+  .prog-card .price{font-family:'Bebas Neue';font-size:18px;color:var(--pink);}
+  .main-cta{
+    background:var(--pink);color:#1a0510;text-align:center;font-weight:800;
+    font-size:14px;padding:15px;border-radius:12px;margin-top:8px;cursor:pointer;border:none;width:100%;
+    font-family:'Manrope',sans-serif;
+  }
+  .plan-card{
+    background:var(--panel);border:1px solid #2a2a24;border-radius:14px;padding:16px;margin-bottom:10px;cursor:pointer;
+  }
+  .plan-card.selected{border-color:var(--pink);}
+  .plan-top{display:flex;justify-content:space-between;align-items:baseline;}
+  .plan-top .name{font-weight:800;font-size:14.5px;}
+  .plan-top .price{font-family:'Bebas Neue';font-size:20px;color:var(--pink);}
+  .plan-desc{font-size:12px;color:var(--gray);margin-top:6px;line-height:1.5;}
+  .slot-row{display:flex;gap:8px;margin:12px 0;}
+  .slot{flex:1;background:var(--panel);border:1px solid #2a2a24;border-radius:10px;padding:11px 4px;text-align:center;font-size:12px;cursor:pointer;}
+  .slot.selected{border-color:var(--pink);color:var(--pink);}
+  .pay-box{
+    background:var(--panel);border:1px solid #2a2a24;border-radius:14px;padding:20px;text-align:center;margin-top:6px;
+  }
+  .pay-box .amount{font-family:'Bebas Neue';font-size:30px;color:var(--pink);}
+  .pay-box .currency{font-size:12px;color:var(--gray);margin:6px 0 16px;}
+  .pay-methods{display:flex;gap:8px;justify-content:center;margin:14px 0;}
+  .coin{width:34px;height:34px;border-radius:50%;background:#262620;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--white);font-weight:800;}
+  .menu-btn{
+    display:flex;align-items:center;justify-content:space-between;background:var(--panel);
+    border:1px solid #2a2a24;border-radius:12px;padding:13px 15px;margin-bottom:8px;cursor:pointer;
+  }
+  .menu-btn .label{font-size:13px;font-weight:700;}
+  .menu-btn .sub{font-size:11px;color:var(--gray);margin-top:2px;}
+  .menu-btn .arrow{color:var(--pink);font-size:16px;flex-shrink:0;padding-left:10px;}
+  .notice{
+    background:rgba(240,50,122,0.1);border:1px solid var(--pink);border-radius:12px;
+    padding:12px 14px;font-size:12px;color:var(--white);line-height:1.5;margin-top:10px;display:none;
+  }
+  .notice.show{display:block;}
+  .sbp-block{display:flex;gap:14px;align-items:center;background:var(--panel);border:1px solid #2a2a24;border-radius:14px;padding:14px;margin-top:14px;text-align:left;}
+  .sbp-qr{width:92px;height:92px;border-radius:8px;background:#fff;flex-shrink:0;padding:4px;}
+  .sbp-details{flex:1;min-width:0;}
+  .sbp-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #2a2a24;}
+  .sbp-row:last-child{border-bottom:none;}
+  .sbp-label{font-size:11px;color:var(--gray);}
+  .sbp-value{font-size:13px;font-weight:800;text-align:right;}
+  .rule-item{
+    display:flex;align-items:flex-start;gap:10px;background:rgba(240,50,122,0.08);
+    border:1.5px solid var(--pink);border-radius:12px;padding:12px 14px;margin-bottom:10px;
+  }
+  .rule-item .num{
+    flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--pink);color:#1a0510;
+    font-family:'Bebas Neue';font-size:13px;display:flex;align-items:center;justify-content:center;
+  }
+  .rule-item .text{font-size:13px;color:var(--white);line-height:1.45;padding-top:1px;}
+  .calc-row{display:flex;gap:10px;}
+  .calc-field{flex:1;margin-bottom:12px;}
+  .calc-field label{font-size:10.5px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;}
+  .calc-field input, .calc-field select{
+    width:100%;background:var(--panel);border:1px solid #2a2a24;border-radius:10px;
+    padding:11px 10px;color:var(--white);font-size:13.5px;font-family:'Manrope',sans-serif;
+  }
+  .calc-result{display:none;margin-top:6px;}
+  .calc-result.show{display:block;}
+  .tabbar{
+    display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #2a2a24;background:#141414;
+    position:sticky;bottom:0;z-index:20;
+  }
+  .tab{font-size:10px;color:var(--gray);text-align:center;cursor:pointer;padding:4px 6px;}
+  .tab.active{color:var(--pink);}
+  .tab .dot{width:6px;height:6px;border-radius:50%;background:currentColor;margin:0 auto 4px;}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="tg-bar">
+    <div class="back" id="backBtn" onclick="goBack()">‹</div>
+    <div class="avatar"><img src="../assets/hero_face.jpg?v=2" alt="Анжела Торосян"></div>
+    <div>
+      <b>Angella Fit</b>
+      <span id="barSub">пАнтера · Адлер</span>
+    </div>
+  </div>
+
+  <main id="main">
+
+    <!-- HOME -->
+    <section class="view active" data-tab="home" id="view-home">
+      <div class="cover-photo"><img src="../assets/hero_face.jpg?v=2" alt="Анжела Торосян"><div class="brand"><span>А</span>НЖЕЛА</div></div>
+      <div class="content">
+        <div class="section-title" style="margin-top:0;">Титулы и регалии</div>
+        <div class="regalia-list">
+          <div class="regalia-item">🏆 Чемпионка Европы по силовым видам спорта «OLIMPIA XI»</div>
+          <div class="regalia-item">🏆 МС (Мастер спорта)</div>
+          <div class="regalia-item">🏆 Рекордсменка мира</div>
+          <div class="regalia-item">✨ Лидер России в области фитнеса 2023</div>
+          <div class="regalia-item">✨ Человек года в области спорта 2022</div>
+          <div class="regalia-item">✨ Эксперт года в области фитнеса 2024</div>
+          <div class="regalia-item">🏆 Гран-при в конкурсе красоты «Индива Сочи»</div>
+          <div class="regalia-item">🏆 Королева спорта по версии журнала «В Спорте 24»</div>
+          <div class="regalia-item">🥈 Серебряная призёрка турнира по мас-рестлингу, Санкт-Петербург</div>
+          <div class="regalia-item">⚖️ Судья 2 категории ФССР</div>
+        </div>
+        <div class="menu-btn" onclick="goTab('club')"><div><div class="label">Фитнес-клуб «пАнтера»</div><div class="sub">Направления, фото, расписание и запись</div></div><div class="arrow">🐆</div></div>
+        <div class="menu-btn" onclick="goTab('directions','group')"><div><div class="label">Программы</div><div class="sub">Тренировки, диета, онлайн-сопровождение</div></div><div class="arrow">🏋️</div></div>
+        <div class="menu-btn" onclick="goTab('free')"><div><div class="label">Бесплатные материалы</div><div class="sub">Питание, тренировки, калькулятор КБЖУ</div></div><div class="arrow">🎁</div></div>
+        <button class="main-cta" onclick="goTab('directions','group')">Смотреть программы</button>
+      </div>
+    </section>
+
+    <!-- DIRECTIONS: group -->
+    <section class="view" data-tab="directions" id="view-dir-group">
+      <div class="cover-photo"><img src="../assets/hero_portrait.jpg" alt="Анжела Торосян"></div>
+      <div class="content">
+        <div class="greet">Привет 👋 что хочешь сегодня?</div>
+        <div class="split" id="dirSplit">
+          <div class="split-btn active" data-split="group" onclick="switchSplit('group')">
+            <div class="ico">🏋️</div><div class="label">Групповые</div><div class="sub">10+ направлений</div>
+          </div>
+          <div class="split-btn" data-split="personal" onclick="switchSplit('personal')">
+            <div class="ico">🐆</div><div class="label">Персонально</div><div class="sub">1-на-1</div>
+          </div>
+          <div class="split-btn" data-split="online" onclick="switchSplit('online')">
+            <div class="ico">💻</div><div class="label">Онлайн</div><div class="sub">Диета, программы</div>
+          </div>
+        </div>
+        <div class="section-title">Популярные направления</div>
+        <div class="prog-card" onclick="openDirection('powerbody')"><div><div class="name">Мощное тело</div><div class="sub">Вт, Чт, Сб · авторская программа</div></div><div class="price">›</div></div>
+        <div class="prog-card" onclick="openDirection('shape')"><div><div class="name">Стройная фигура</div><div class="sub">Пн, Ср, Пт · снижение веса</div></div><div class="price">›</div></div>
+        <div class="prog-card" onclick="openDirection('pilates')"><div><div class="name">Пилатес</div><div class="sub">Пн, Ср, Пт · осанка и гибкость</div></div><div class="price">›</div></div>
+        <div class="prog-card" onclick="openDirection('gym')"><div><div class="name">Абонемент в зал</div><div class="sub">Безлимит на все групповые направления</div></div><div class="price">›</div></div>
+      </div>
+    </section>
+
+    <!-- DIRECTIONS: personal -->
+    <section class="view" data-tab="directions" id="view-dir-personal">
+      <div class="content" style="padding-top:20px;">
+        <div class="greet" style="margin-bottom:14px;"><b>Персональные тренировки</b> — 1-на-1 с Анжелой</div>
+        <div class="menu-btn"><div><div class="label">В зале «пАнтера», Адлер</div><div class="sub">Или онлайн — созвон и разбор техники</div></div><div class="arrow">🐆</div></div>
+        <div class="menu-btn"><div><div class="label">Индивидуальная программа</div><div class="sub">Под твою цель, уровень и график</div></div><div class="arrow">✓</div></div>
+        <div class="menu-btn"><div><div class="label">Можно совмещать с групповыми</div><div class="sub">Гибкий формат занятий</div></div><div class="arrow">✓</div></div>
+        <div class="section-title">Стоимость</div>
+        <div class="plan-card" onclick="goPayment('Тренировки без сопровождения','8 000 ₽')">
+          <div class="plan-top"><span class="name">Тренировки без сопровождения</span><span class="price">8 000 ₽</span></div>
+          <div class="plan-desc">Персональная программа тренировок — занимаешься сама по плану</div>
+        </div>
+        <div class="plan-card" onclick="goPayment('Тренировки + сопровождение','10 000 ₽')">
+          <div class="plan-top"><span class="name">Тренировки + сопровождение</span><span class="price">10 000 ₽</span></div>
+          <div class="plan-desc">Тренировки плюс разбор техники и контроль прогресса на связи с Анжелой</div>
+        </div>
+        <div class="plan-card" onclick="goPayment('Питание','5 000 ₽')">
+          <div class="plan-top"><span class="name">Питание</span><span class="price">5 000 ₽</span></div>
+          <div class="plan-desc">Индивидуальный план питания под твою цель и образ жизни</div>
+        </div>
+        <div class="plan-card selected" onclick="goPayment('Полное сопровождение','15 000 ₽')">
+          <div class="plan-top"><span class="name">Полное сопровождение</span><span class="price">15 000 ₽</span></div>
+          <div class="plan-desc">Тренировки + питание + сопровождение — максимальный результат</div>
+        </div>
+        <div class="plan-desc" style="margin:2px 0 14px;">Нажми на пакет — откроется оплата. Формат и график обсудим в переписке</div>
+        <button class="main-cta" onclick="showNotice('personal-notice')">Написать Анжеле</button>
+        <div class="notice" id="personal-notice">Заявка отправлена. Анжела свяжется с тобой в этом чате, чтобы обсудить формат и стоимость.</div>
+      </div>
+    </section>
+
+    <!-- DIRECTIONS: online catalog -->
+    <section class="view with-watermark" data-tab="directions" id="view-dir-online">
+      <div class="content" style="padding-top:20px;">
+        <div class="greet" style="margin-bottom:14px;"><b>Онлайн с Анжелой</b> — занимайся из любой точки</div>
+        <div class="prog-card" onclick="openProduct('diet')"><div><div class="name">План питания</div><div class="sub">Индивидуальная диета под твою цель</div></div><div class="price">›</div></div>
+        <div class="prog-card" onclick="openProduct('training')"><div><div class="name">Тренировочная программа</div><div class="sub">Программа тренировок на 4-8 недель</div></div><div class="price">›</div></div>
+        <div class="prog-card" onclick="openProduct('coaching')"><div><div class="name">Онлайн-ведение</div><div class="sub">Личное сопровождение и корректировки от Анжелы</div></div><div class="price">›</div></div>
+        <div class="prog-card" onclick="openProduct('personal-online')"><div><div class="name">Персональная онлайн-программа</div><div class="sub">Индивидуальный план + разбор техники по видео</div></div><div class="price">›</div></div>
+      </div>
+    </section>
+
+    <!-- DIRECTION DETAIL (reusable) -->
+    <section class="view with-watermark" data-tab="directions" id="view-direction-detail">
+      <div class="content" style="padding-top:20px;" id="directionDetailContent"></div>
+    </section>
+
+    <!-- PRODUCT DETAIL (reusable) -->
+    <section class="view with-watermark" data-tab="directions" id="view-product-detail">
+      <div class="content" style="padding-top:20px;" id="productDetailContent"></div>
+    </section>
+
+    <!-- CLUB -->
+    <section class="view with-watermark" data-tab="club" id="view-club">
+      <div class="content" style="padding-top:20px;">
+        <div class="greet" style="margin-bottom:4px;"><b>«пАнтера» — женское сообщество в Адлере</b></div>
+        <div class="greet" style="margin-bottom:14px;">Тренируемся вместе, без давления и оценки. Ниже — расписание и запись на групповые занятия.</div>
+        <div class="greet" style="margin-bottom:10px;"><b>Групповые занятия на неделе</b></div>
+        <div class="menu-btn"><div><div class="label">Мощное тело</div><div class="sub">Вт, Чт, Сб · 19:00</div></div><div class="arrow">›</div></div>
+        <div class="menu-btn"><div><div class="label">Силовая база</div><div class="sub">Пн, Ср, Пт · 08:00</div></div><div class="arrow">›</div></div>
+        <div class="section-title">Выбери день — Мощное тело</div>
+        <div class="slot-row" id="clubSlots">
+          <div class="slot" onclick="selectSlot(this)">Вт 19:00</div>
+          <div class="slot selected" onclick="selectSlot(this)">Чт 19:00</div>
+          <div class="slot" onclick="selectSlot(this)">Сб 11:00</div>
+        </div>
+        <div class="section-title">Абонемент</div>
+        <div class="plan-card selected">
+          <div class="plan-top"><span class="name">8 занятий</span><span class="price">4 000 ₽</span></div>
+          <div class="plan-desc">30 дней, любые групповые форматы студии</div>
+        </div>
+        <button class="main-cta" onclick="goPayment('Абонемент «Мощное тело» · 8 занятий','4 000 ₽')">Записаться и оплатить</button>
+      </div>
+    </section>
+
+    <!-- PAYMENT -->
+    <section class="view with-watermark" data-tab="none" id="view-payment">
+      <div class="content" style="padding-top:20px;">
+        <div class="pay-box">
+          <div class="amount" id="payAmount">4 000 ₽</div>
+          <div class="currency" id="payLabel">Абонемент «Мощное тело» · 8 занятий</div>
+          <div class="sbp-block">
+            <img class="sbp-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&data=%2B79183213023" alt="QR с номером телефона для перевода по СБП" loading="lazy">
+            <div class="sbp-details">
+              <div class="sbp-row"><span class="sbp-label">Банк</span><span class="sbp-value">Сбербанк</span></div>
+              <div class="sbp-row"><span class="sbp-label">Телефон</span><span class="sbp-value">+7 918 321 30-23</span></div>
+            </div>
+          </div>
+          <button class="main-cta" style="margin-top:12px;" onclick="copySbp()">Скопировать номер телефона</button>
+          <div class="notice show">Переведи сумму по номеру телефона через СБП (Сбербанк) и пришли скрин перевода Анжеле в этом чате — абонемент активируем сразу после подтверждения.</div>
+          <div class="notice" id="sbp-copied">Номер скопирован ✓</div>
+          <div class="section-title" style="margin-top:20px;">Или криптовалютой</div>
+          <div class="pay-methods">
+            <div class="coin">USDT</div>
+            <div class="coin">TON</div>
+            <div class="coin">BTC</div>
+            <div class="coin">TRX</div>
+          </div>
+          <button class="main-cta" style="margin-top:10px;" onclick="payCrypto()">Оплатить криптой через Crypto Bot →</button>
+          <div class="notice" id="pay-notice">Откроется Crypto Bot в Telegram — выбери монету (USDT, TON, BTC, TRX и другие) и переведи сумму, указанную выше. После оплаты пришли скрин перевода Анжеле в этом чате — абонемент активируем сразу после подтверждения.</div>
+        </div>
+        <div class="menu-btn" style="margin-top:14px;"><div><div class="label">10+ монет на выбор</div><div class="sub">USDT, TON, BTC, TRX, ETH и другие — в Crypto Bot</div></div><div class="arrow">✓</div></div>
+        <div class="menu-btn"><div><div class="label">Подтверждение вручную</div><div class="sub">Пришли скрин оплаты Анжеле в чате</div></div><div class="arrow">✓</div></div>
+      </div>
+    </section>
+
+    <!-- FREE -->
+    <section class="view" data-tab="free" id="view-free">
+      <div class="content" style="padding-top:20px;">
+        <div class="greet" style="margin-bottom:4px;"><b>Бесплатные материалы</b></div>
+        <div class="greet" style="margin-bottom:14px;">Мини-энциклопедия по питанию и тренировкам для девочек — от Анжелы, без записи и оплаты.</div>
+        <div class="section-title">Питание</div>
+        <div class="prog-card" onclick="openFreeGuide('nutrition-basics')"><div><div class="name">Женская диетология: 5 правил</div><div class="sub">Базовые принципы питания для тренирующихся</div></div><div class="price">›</div></div>
+        <div class="prog-card" onclick="openFreeGuide('kbju')"><div><div class="name">Как считать КБЖУ</div><div class="sub">Простой расчёт нормы без сложных формул</div></div><div class="price">›</div></div>
+        <div class="section-title">Тренировки</div>
+        <div class="prog-card" onclick="openFreeGuide('home-workout')"><div><div class="name">Комплекс дома без инвентаря</div><div class="sub">20 минут · для любого уровня</div></div><div class="price">›</div></div>
+        <div class="prog-card" onclick="openFreeGuide('stretch-workout')"><div><div class="name">Растяжка и осанка</div><div class="sub">10 минут · после тренировки или отдельно</div></div><div class="price">›</div></div>
+        <div class="section-title">База знаний · спортпит</div>
+        <div class="prog-card" onclick="openFreeGuide('sportpit-gain')"><div><div class="name">Спортпит для набора массы</div><div class="sub">С чего начать, если цель — расти</div></div><div class="price">›</div></div>
+        <div class="prog-card" onclick="openFreeGuide('protein')"><div><div class="name">Протеин</div><div class="sub">Какой выбрать и как принимать</div></div><div class="price">›</div></div>
+        <div class="prog-card" onclick="openFreeGuide('creatine')"><div><div class="name">Креатин</div><div class="sub">Зачем нужен и как принимать</div></div><div class="price">›</div></div>
+        <div class="prog-card" onclick="openFreeGuide('sportpit-loss')"><div><div class="name">Спортпит для похудения</div><div class="sub">Что реально работает, а что маркетинг</div></div><div class="price">›</div></div>
+        <div class="prog-card" onclick="openFreeGuide('sleep-aids')"><div><div class="name">Добавки для сна и восстановления</div><div class="sub">Магний, мелатонин, глицин — как и когда</div></div><div class="price">›</div></div>
+        <div class="section-title">Инструменты</div>
+        <div class="prog-card" onclick="openCalculator()"><div><div class="name">КБЖУ-калькулятор</div><div class="sub">Твоя норма калорий и БЖУ за 30 секунд</div></div><div class="price">›</div></div>
+        <div class="prog-card" onclick="openGame()"><div><div class="name">Тапни — получи программу 🏋️</div><div class="sub">Мини-игра с бонусной тренировкой</div></div><div class="price">›</div></div>
+      </div>
+    </section>
+
+    <!-- FREE GUIDE DETAIL (reusable) -->
+    <section class="view with-watermark" data-tab="free" id="view-free-detail">
+      <div class="content" style="padding-top:20px;" id="freeDetailContent"></div>
+    </section>
+
+    <!-- KBJU CALCULATOR -->
+    <section class="view with-watermark" data-tab="free" id="view-calculator">
+      <div class="content" style="padding-top:20px;">
+        <div class="greet" style="margin-bottom:4px;"><b>КБЖУ-калькулятор</b></div>
+        <div class="greet" style="margin-bottom:14px;">Узнай свою примерную норму калорий и БЖУ за 30 секунд.</div>
+        <div class="split" id="calcGenderSplit">
+          <div class="split-btn active" data-gender="female" onclick="setCalcGender('female')"><div class="label">Женский</div></div>
+          <div class="split-btn" data-gender="male" onclick="setCalcGender('male')"><div class="label">Мужской</div></div>
+        </div>
+        <div class="calc-row">
+          <div class="calc-field"><label>Возраст</label><input type="number" id="calcAge" placeholder="30" inputmode="numeric"></div>
+          <div class="calc-field"><label>Вес, кг</label><input type="number" id="calcWeight" placeholder="60" inputmode="numeric"></div>
+          <div class="calc-field"><label>Рост, см</label><input type="number" id="calcHeight" placeholder="165" inputmode="numeric"></div>
+        </div>
+        <div class="calc-field">
+          <label>Активность</label>
+          <select id="calcActivity">
+            <option value="1.2">Минимальная — сидячая, без тренировок</option>
+            <option value="1.375" selected>Средняя — тренировки 3-4 раза в неделю</option>
+            <option value="1.55">Высокая — тренировки 5+ раз в неделю</option>
+          </select>
+        </div>
+        <div class="calc-field">
+          <label>Цель</label>
+          <select id="calcGoal">
+            <option value="loss">Похудение</option>
+            <option value="maintain" selected>Поддержание веса</option>
+            <option value="gain">Набор массы</option>
+          </select>
+        </div>
+        <button class="main-cta" onclick="calcKBJU()">Рассчитать</button>
+        <div class="calc-result" id="calcResult">
+          <div class="section-title">Твоя норма</div>
+          <div class="plan-card selected">
+            <div class="plan-top"><span class="name">Калории в день</span><span class="price" id="calcKcal">—</span></div>
+            <div class="plan-desc" id="calcMacros">Белки — · Жиры — · Углеводы —</div>
+          </div>
+          <button class="main-cta" onclick="openProduct('diet')">Хочешь готовое меню под эти цифры? Заказать план питания</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAP GAME -->
+    <section class="view" data-tab="game" id="view-game">
+      <div class="content" style="padding-top:20px;text-align:center;">
+        <div class="greet" style="margin-bottom:4px;"><b>Тапни гантельку — получи бесплатную программу</b></div>
+        <div class="greet" style="margin-bottom:20px;">30 тапов — и откроется бонусная тренировка от Анжелы.</div>
+        <div id="gameArea">
+          <div id="tapCount" style="font-family:'Bebas Neue';font-size:44px;color:var(--pink);margin-bottom:10px;">0 / 30</div>
+          <div style="background:#141414;border-radius:8px;height:8px;margin-bottom:26px;overflow:hidden;">
+            <div id="tapProgress" style="height:100%;width:0%;background:var(--pink);transition:width .15s ease;"></div>
+          </div>
+          <div id="dumbbellBtn" onclick="tapDumbbell()" style="font-size:90px;cursor:pointer;user-select:none;transition:transform .08s ease;">🏋️‍♀️</div>
+        </div>
+        <div id="gameReward" style="display:none;">
+          <div style="font-size:60px;margin-bottom:10px;">🎉</div>
+          <div class="greet" style="margin-bottom:14px;"><b>Готово! Твоя бонусная тренировка открыта</b></div>
+          <button class="main-cta" onclick="openFreeGuide('secret-workout')">Смотреть тренировку</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="tabbar">
+    <div class="tab active" data-tab="home" onclick="goTab('home')"><div class="dot"></div>О тренере</div>
+    <div class="tab" data-tab="directions" onclick="goTab('directions','group')"><div class="dot"></div>Программы</div>
+    <div class="tab" data-tab="club" onclick="goTab('club')"><div class="dot"></div>Клуб</div>
+    <div class="tab" data-tab="free" onclick="goTab('free')"><div class="dot"></div>Бесплатно</div>
+    <div class="tab" data-tab="game" onclick="goTab('game')"><div class="dot"></div>Игра</div>
+  </div>
+</div>
+
+<script>
+  // Telegram Mini App init
+  if (window.Telegram && window.Telegram.WebApp) {
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    try { tg.setHeaderColor('#0d0d0d'); tg.setBackgroundColor('#0d0d0d'); } catch(e){}
+  }
+
+  const directions = {
+    powerbody: { name:'«Мощное тело»', tag:'Мощное тело · направление', schedule:'Вторник, четверг, суббота', time:'19:00 · зал «пАнтера», Адлер',
+      plans:[{name:'8 занятий',price:'4 000 ₽',desc:'30 дней · действует на любые групповые направления'},{name:'Пробное занятие',price:'600 ₽',desc:'Если хочешь попробовать перед абонементом'}],
+      includes:['Интенсив на снижение веса и силу','Небольшие группы, разбор техники','Можно начать с любого уровня'],
+      cta:'Записаться на «Мощное тело»' },
+    pilates: { name:'«Пилатес»', tag:'Пилатес · направление', schedule:'Понедельник, среда, пятница', time:'по расписанию · зал «пАнтера», Адлер',
+      plans:[{name:'8 занятий',price:'4 000 ₽',desc:'30 дней · действует на любые групповые направления'}],
+      includes:['Работа с осанкой и гибкостью','Дыхательные практики','Подходит новичкам'],
+      cta:'Записаться на «Пилатес»' },
+    shape: { name:'«Стройная фигура»', tag:'Стройная фигура · направление', schedule:'Понедельник, среда, пятница', time:'по расписанию · зал «пАнтера», Адлер',
+      plans:[{name:'8 занятий',price:'4 000 ₽',desc:'30 дней · действует на любые групповые направления'}],
+      includes:['Кардио и силовые упражнения в сочетании','Снижение веса и коррекция фигуры','Средняя интенсивность, подходит новичкам'],
+      cta:'Записаться на «Стройная фигура»' },
+    gym: { name:'Абонемент в зал', tag:'Абонемент · зал', schedule:'Любые групповые направления', time:'зал «пАнтера», Адлер',
+      plans:[{name:'8 занятий',price:'4 000 ₽',desc:'30 дней · безлимит на все групповые направления'}],
+      includes:['Доступ ко всем групповым направлениям','Можно менять направления в течение месяца','Без привязки к одному тренеру'],
+      cta:'Оформить абонемент в зал' }
+  };
+
+  const products = {
+    diet: { name:'План питания', tag:'План питания', desc:'индивидуальная диета под твою цель',
+      includes:['Расчёт КБЖУ под твою цель и образ жизни','Меню на неделю с заменами продуктов','Корректировки от Анжелы по ходу'],
+      price:'5 000 ₽', planDesc:'Разработан лично под тебя, разово', cta:'Заказать план питания' },
+    training: { name:'Тренировочная программа', tag:'Тренировочная программа', desc:'на 4-8 недель, под твой уровень',
+      includes:['План на каждую тренировку, дом или зал','Видео техники выполнения упражнений','Можно задать вопрос Анжеле по программе'],
+      price:'5 000 ₽', planDesc:'Разово, под твою цель и уровень', cta:'Заказать программу' },
+    coaching: { name:'Онлайн-ведение', tag:'Онлайн-ведение', desc:'личное сопровождение от Анжелы',
+      includes:['Еженедельная связь с Анжелой','Корректировка программы и питания по ходу','Поддержка и ответы на вопросы в чате'],
+      price:'5 000 ₽', planDesc:'В месяц, с еженедельными корректировками', cta:'Оформить ведение' },
+    'personal-online': { name:'Персональная онлайн-программа', tag:'Перс. онлайн-программа', desc:'план от Анжелы лично под тебя',
+      includes:['Персональный план тренировок и питания','Разбор техники по видео','Личная связь с Анжелой по программе'],
+      price:'5 000 ₽', planDesc:'Разово, полностью под твою цель', cta:'Заказать программу' }
+  };
+
+  const freeGuides = {
+    'nutrition-basics': { name:'Женская диетология: 5 правил', tag:'Питание · бесплатно',
+      intro:'База, с которой стоит начать, прежде чем считать калории или садиться на диету.',
+      includes:[
+        'Ешь достаточно белка — минимум 1.2-1.5 г на кг веса в день',
+        'Не убирай жиры полностью — они нужны для гормонального фона',
+        'Пей воду по чувству жажды плюс во время тренировок',
+        'Не голодай перед тренировкой — упадок сил замедлит прогресс',
+        'Считай не «дни без сладкого», а баланс за неделю'
+      ],
+      ctaLabel:'Хочешь план под себя лично? Заказать план питания', ctaAction:"openProduct('diet')" },
+    kbju: { name:'Как считать КБЖУ', tag:'Питание · бесплатно',
+      intro:'Простой способ прикинуть свою норму без сложных формул и приложений.',
+      includes:[
+        'Вес тела × 30 ккал — стартовая точка для поддержания веса',
+        'Для похудения — минус 10-15% от этой цифры, не больше',
+        'Белки: 1.2-1.5 г/кг, жиры: 0.8-1 г/кг, остальное — углеводы',
+        'Взвешивайся раз в неделю, а не каждый день',
+        'Корректируй норму раз в 2-3 недели по факту'
+      ],
+      ctaLabel:'Хочешь точный расчёт под свою цель? Заказать план питания', ctaAction:"openProduct('diet')" },
+    'home-workout': { name:'Комплекс дома без инвентаря', tag:'Тренировка · бесплатно',
+      intro:'20 минут, три круга, без оборудования. Подходит для любого уровня.',
+      includes:[
+        'Приседания — 15 повторений',
+        'Отжимания с колен или классические — 10-12 повторений',
+        'Планка — 30-40 секунд',
+        'Выпады на каждую ногу — по 12 повторений',
+        'Ягодичный мостик — 15 повторений',
+        'Отдых между кругами — 60 секунд, всего 3 круга'
+      ],
+      ctaLabel:'Хочешь программу под свой уровень и цель? Смотреть программы', ctaAction:"goTab('directions','online')" },
+    'stretch-workout': { name:'Растяжка и осанка', tag:'Тренировка · бесплатно',
+      intro:'10 минут после тренировки или отдельным блоком вечером — снимает зажимы и улучшает осанку.',
+      includes:[
+        'Растяжка шеи и плеч — по 30 секунд на сторону',
+        'Кошка-корова — 8-10 повторений',
+        'Растяжка задней поверхности бедра — по 30 секунд на ногу',
+        'Растяжка груди в дверном проёме — 30 секунд',
+        'Поза ребёнка — 40-60 секунд в конце'
+      ],
+      ctaLabel:'Хочешь заниматься с разбором техники? Смотреть направления', ctaAction:"goTab('directions','group')" },
+    'sportpit-gain': { name:'Спортпит для набора массы', tag:'База знаний · бесплатно',
+      intro:'Если цель — расти в мышцах, добавки не заменят еду и тренировки, но могут помочь.',
+      includes:[
+        'Сывороточный протеин — добираешь норму белка, если не хватает из еды',
+        'Креатин моногидрат — 3-5 г в день, для силы и объёма мышц',
+        'Гейнер — только если реально не наедаешь калории, не по умолчанию',
+        'Омега-3 и витамин D — база для восстановления и гормонального фона',
+        'Добавки работают только вместе с профицитом калорий и силовыми тренировками'
+      ],
+      ctaLabel:'Хочешь программу под набор массы? Смотреть программы', ctaAction:"goTab('directions','online')" },
+    protein: { name:'Протеин: какой выбрать и как принимать', tag:'База знаний · бесплатно',
+      intro:'Самая понятная и безопасная добавка спортпита — если разобраться, как её использовать.',
+      includes:[
+        'Сывороточный (whey) — быстро усваивается, подходит после тренировки',
+        'Казеин — медленный, можно на ночь',
+        'Норма: 1.2-2 г белка на кг веса в сутки — считая белок из добавки тоже',
+        'Смотри на состав: белок на первом месте, без лишнего сахара',
+        'Протеин — это еда, а не лекарство: пропуск порции ничего не сломает'
+      ],
+      ctaLabel:'Хочешь точный расчёт нормы под себя? Заказать план питания', ctaAction:"openProduct('diet')" },
+    creatine: { name:'Креатин: зачем он нужен', tag:'База знаний · бесплатно',
+      intro:'Одна из немногих добавок с реально доказанной эффективностью для силы и объёма мышц.',
+      includes:[
+        'Моногидрат — самая изученная и рабочая форма, не переплачивай за другие',
+        'Доза: 3-5 г в день, без «загрузки» — эффект накопительный, за 2-4 недели',
+        'Можно пить в любое время дня, с едой или без',
+        'Немного задерживает воду в мышцах — это нормально, не жир',
+        'Не отменяет тренировки и питание — это добавка, а не основа результата'
+      ],
+      ctaLabel:'Хочешь программу с учётом силовых? Смотреть программы', ctaAction:"goTab('directions','group')" },
+    'sportpit-loss': { name:'Спортпит для похудения', tag:'База знаний · бесплатно',
+      intro:'Большинство «жиросжигателей» — маркетинг. Вот что реально помогает на дефиците калорий.',
+      includes:[
+        'Протеин — сохраняет мышцы на дефиците и держит сытость дольше',
+        'Л-карнитин — сам по себе не сжигает жир, работает только вместе с тренировками',
+        'Кофеин / предтреник — бодрость на тренировке, не более того',
+        'Клетчатка — помогает с сытостью и пищеварением на низкокалорийном рационе',
+        'Главное — дефицит калорий, добавки лишь немного облегчают путь'
+      ],
+      ctaLabel:'Хочешь точный план под похудение? Заказать план питания', ctaAction:"openProduct('diet')" },
+    'sleep-aids': { name:'Добавки для сна и восстановления', tag:'База знаний · бесплатно',
+      intro:'Без нормального сна прогресса не будет — ни в силе, ни в похудении.',
+      includes:[
+        'Магний глицинат — расслабляет, помогает уснуть, можно принимать курсом',
+        'Мелатонин — короткими курсами при сбитом режиме, не на постоянку',
+        'Глицин — мягкое действие, можно за 30 минут до сна',
+        'Без телефона за 30-40 минут до сна работает не хуже любой добавки',
+        'Хронический недосып = меньше результата от тренировок, сколько бы добавок ты ни пила'
+      ],
+      ctaLabel:'Хочешь сопровождение и контроль прогресса? Оформить ведение', ctaAction:"openProduct('coaching')" },
+    'secret-workout': { name:'Секретная тренировка: пресс и ягодицы', tag:'Тренировка · бонус',
+      intro:'Ты это заслужила — держи бонусный комплекс от Анжелы, которого нет в общем списке.',
+      includes:[
+        'Скручивания — 20 повторений',
+        'Подъём ног лёжа — 15 повторений',
+        'Ягодичный мостик на одной ноге — по 12 на каждую сторону',
+        'Планка с касанием плеч — 30 секунд',
+        'Присед-пульс — 20 повторений',
+        '2 круга, отдых между кругами 60 секунд'
+      ],
+      ctaLabel:'Понравилось? Смотреть все программы', ctaAction:"goTab('directions','online')" }
+  };
+
+  let history = [];
+  let currentView = 'view-home';
+  let currentTab = 'home';
+
+  function render(viewId, tab, barSub, pushHistory){
+    if (pushHistory !== false) history.push({view: currentView, tab: currentTab, barSub: document.getElementById('barSub').textContent});
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    document.getElementById('barSub').textContent = barSub;
+    document.getElementById('backBtn').classList.toggle('show', history.length > 0 && viewId !== 'view-home');
+    currentView = viewId; currentTab = tab;
+    window.scrollTo(0,0);
+  }
+
+  function goBack(){
+    const prev = history.pop();
+    if (!prev) { goTab('home'); return; }
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(prev.view).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === prev.tab));
+    document.getElementById('barSub').textContent = prev.barSub;
+    document.getElementById('backBtn').classList.toggle('show', history.length > 0 && prev.view !== 'view-home');
+    currentView = prev.view; currentTab = prev.tab;
+    window.scrollTo(0,0);
+  }
+
+  function goTab(tab, sub){
+    history = [];
+    if (tab === 'home') render('view-home','home','пАнтера · Адлер', false);
+    else if (tab === 'directions') switchSplit(sub || 'group');
+    else if (tab === 'club') render('view-club','club','Запись в клуб · Адлер', false);
+    else if (tab === 'free') render('view-free','free','Бесплатные материалы', false);
+    else if (tab === 'game') openGame();
+  }
+
+  function switchSplit(which){
+    document.querySelectorAll('#dirSplit .split-btn').forEach(b => b.classList.toggle('active', b.dataset.split === which));
+    const map = {group:['view-dir-group','Направления'], personal:['view-dir-personal','Персонально'], online:['view-dir-online','Онлайн-продукты']};
+    const [viewId, label] = map[which];
+    history = [];
+    render(viewId, 'directions', label, false);
+  }
+
+  function openDirection(id){
+    const d = directions[id];
+    const html = `
+      <div class="greet" style="margin-bottom:14px;"><b>${d.name}</b> — авторская программа Анжелы</div>
+      <div class="menu-btn"><div><div class="label">${d.schedule}</div><div class="sub">${d.time}</div></div><div class="arrow">🕗</div></div>
+      <div class="section-title">Абонементы</div>
+      ${d.plans.map((p,i) => `<div class="plan-card ${i===0?'selected':''}"><div class="plan-top"><span class="name">${p.name}</span><span class="price">${p.price}</span></div><div class="plan-desc">${p.desc}</div></div>`).join('')}
+      <div class="section-title">Что входит</div>
+      ${d.includes.map(t => `<div class="menu-btn"><div class="label">${t}</div><div class="arrow">✓</div></div>`).join('')}
+      <button class="main-cta" onclick="goPayment('${d.name} · ${d.plans[0].name}','${d.plans[0].price}')">${d.cta}</button>
+    `;
+    document.getElementById('directionDetailContent').innerHTML = html;
+    render('view-direction-detail','directions', d.tag);
+  }
+
+  function openProduct(id){
+    const p = products[id];
+    const html = `
+      <div class="greet" style="margin-bottom:14px;"><b>${p.name}</b> — ${p.desc}</div>
+      <div class="section-title">Что входит</div>
+      ${p.includes.map(t => `<div class="menu-btn"><div class="label">${t}</div><div class="arrow">✓</div></div>`).join('')}
+      <div class="section-title">Стоимость</div>
+      <div class="plan-card selected"><div class="plan-top"><span class="name">${p.name}</span><span class="price">${p.price}</span></div><div class="plan-desc">${p.planDesc}</div></div>
+      <button class="main-cta" onclick="goPayment('${p.name}','${p.price}')">${p.cta}</button>
+    `;
+    document.getElementById('productDetailContent').innerHTML = html;
+    render('view-product-detail','directions', p.tag);
+  }
+
+  function openFreeGuide(id){
+    const g = freeGuides[id];
+    const html = `
+      <div class="greet" style="margin-bottom:14px;"><b>${g.name}</b><br>${g.intro}</div>
+      <div class="section-title">Что делать</div>
+      ${g.includes.map((t,i) => `<div class="rule-item"><div class="num">${i+1}</div><div class="text">${t}</div></div>`).join('')}
+      <button class="main-cta" onclick="${g.ctaAction}">${g.ctaLabel}</button>
+    `;
+    document.getElementById('freeDetailContent').innerHTML = html;
+    render('view-free-detail','free', g.tag);
+  }
+
+  let calcGender = 'female';
+
+  function setCalcGender(g){
+    calcGender = g;
+    document.querySelectorAll('#calcGenderSplit .split-btn').forEach(b => b.classList.toggle('active', b.dataset.gender === g));
+  }
+
+  function openCalculator(){
+    document.getElementById('calcResult').classList.remove('show');
+    render('view-calculator','free','КБЖУ-калькулятор');
+  }
+
+  function calcKBJU(){
+    const age = parseFloat(document.getElementById('calcAge').value) || 30;
+    const weight = parseFloat(document.getElementById('calcWeight').value) || 60;
+    const height = parseFloat(document.getElementById('calcHeight').value) || 165;
+    const activity = parseFloat(document.getElementById('calcActivity').value);
+    const goal = document.getElementById('calcGoal').value;
+
+    let bmr = 10 * weight + 6.25 * height - 5 * age + (calcGender === 'male' ? 5 : -161);
+    let kcal = bmr * activity;
+    if (goal === 'loss') kcal *= 0.85;
+    if (goal === 'gain') kcal *= 1.1;
+    kcal = Math.round(kcal / 10) * 10;
+
+    const proteinG = Math.round(weight * 1.6);
+    const fatG = Math.round(weight * 1);
+    const carbsKcal = kcal - (proteinG * 4 + fatG * 9);
+    const carbsG = Math.max(0, Math.round(carbsKcal / 4));
+
+    document.getElementById('calcKcal').textContent = kcal + ' ккал';
+    document.getElementById('calcMacros').textContent = `Белки ${proteinG} г · Жиры ${fatG} г · Углеводы ${carbsG} г`;
+    document.getElementById('calcResult').classList.add('show');
+  }
+
+  let tapCount = 0;
+  const tapGoal = 30;
+
+  function openGame(){
+    tapCount = 0;
+    document.getElementById('tapCount').textContent = '0 / ' + tapGoal;
+    document.getElementById('tapProgress').style.width = '0%';
+    document.getElementById('gameArea').style.display = 'block';
+    document.getElementById('gameReward').style.display = 'none';
+    history = [];
+    render('view-game','game','Мини-игра · приз', false);
+  }
+
+  function tapDumbbell(){
+    if (tapCount >= tapGoal) return;
+    tapCount++;
+    document.getElementById('tapCount').textContent = tapCount + ' / ' + tapGoal;
+    document.getElementById('tapProgress').style.width = Math.min(100, tapCount / tapGoal * 100) + '%';
+    const btn = document.getElementById('dumbbellBtn');
+    btn.style.transform = 'scale(0.85)';
+    setTimeout(() => { btn.style.transform = 'scale(1)'; }, 80);
+    if (tapCount >= tapGoal) {
+      setTimeout(() => {
+        document.getElementById('gameArea').style.display = 'none';
+        document.getElementById('gameReward').style.display = 'block';
+      }, 150);
+    }
+  }
+
+  function selectSlot(el){
+    el.parentElement.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function goPayment(label, amount){
+    document.getElementById('payLabel').textContent = label;
+    document.getElementById('payAmount').textContent = amount;
+    document.getElementById('pay-notice').classList.remove('show');
+    document.getElementById('sbp-copied').classList.remove('show');
+    render('view-payment','none','Оплата');
+  }
+
+  function showNotice(id){
+    document.getElementById(id).classList.add('show');
+  }
+
+  function copySbp(){
+    const phone = '+79183213023';
+    if (navigator.clipboard) { navigator.clipboard.writeText(phone).catch(()=>{}); }
+    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) { Telegram.WebApp.HapticFeedback.notificationOccurred('success'); }
+    showNotice('sbp-copied');
+  }
+
+  function payCrypto(){
+    const url = 'https://t.me/send?start=IVrdc1mxZJbS';
+    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.openTelegramLink) { Telegram.WebApp.openTelegramLink(url); }
+    else { window.open(url, '_blank'); }
+    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) { Telegram.WebApp.HapticFeedback.notificationOccurred('success'); }
+    showNotice('pay-notice');
+  }
+</script>
+
+</body>
+</html>
